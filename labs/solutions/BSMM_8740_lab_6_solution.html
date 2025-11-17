@@ -102,13 +102,22 @@ The data can be found in your **data** directory
         <div class="solution-box">
           <div class="solution-title">SOLUTION</div>
           <pre><code class="language-r">
-arima_data %>%
+head(arima_data)
+
+arima_long <- arima_data %>%
+  pivot_longer(
+    cols = c("TD", "BMO", "BNS", "RBC", "CM"),
+    names_to = "symbol",
+    values_to = "close"
+  )
+
+arima_long %>%
   plot_time_series(
-    .date_var   = date,
-    .value      = close,
-    .facet_vars = symbol,
-    .interactive = FALSE,
-    .title = "Daily Closing Prices for Major Canadian Banks"
+    .date_var = date,
+    .value = close,
+    .color_var = symbol,
+    .smooth = FALSE,
+    .interactive = FALSE
   )
           </code></pre>
         </div>
@@ -120,17 +129,22 @@ arima_data %>%
         <div class="solution-box">
           <div class="solution-title">SOLUTION</div>
           <pre><code class="language-r">
-cm_data <- arima_data %>% filter(symbol == "CM")
+cm_data <- arima_long %>% 
+  filter(symbol == "CM") %>% 
+  select(date, close)
 
-splits <- cm_data %>%
-  time_series_split(initial = "10 years", assess = "1 year")
+splits <- time_series_split(
+  cm_data,
+  initial = "10 years",
+  assess = "1 year"
+)
 
 splits %>%
   tk_time_series_cv_plan() %>%
   plot_time_series_cv_plan(
     .date_var = date,
-    .value    = close,
-    .title    = "Training/Test Split for CM Closing Price"
+    .value = close,
+    .title = "Train/Test Split for CM Stock Price"
   )
           </code></pre>
         </div>
@@ -142,11 +156,19 @@ splits %>%
         <div class="solution-box">
           <div class="solution-title">SOLUTION</div>
           <pre><code class="language-r">
-time_rec <- recipe(close ~ ., data = training(splits))
+library(recipes)
+library(tidymodels)
+library(modeltime)   # required for arima_reg()
 
+
+# Recipe (simple: close ~ date)
+time_rec <- recipe(close ~ date, data = training(splits))
+
+# ARIMA model specification
 model_spec_arima <- arima_reg() %>%
   set_engine("auto_arima")
 
+# Workflow
 workflow_fit_arima <- workflow() %>%
   add_recipe(time_rec) %>%
   add_model(model_spec_arima) %>%
@@ -161,19 +183,23 @@ workflow_fit_arima <- workflow() %>%
         <div class="solution-box">
           <div class="solution-title">SOLUTION</div>
           <pre><code class="language-r">
-models_tbl <- modeltime_table(workflow_fit_arima)
+# A MODELS TABLE
+models_tbl <- modeltime_table(
+  workflow_fit_arima
+)
 
+# A CALIBRATION TABLE
 calibration_tbl <- models_tbl %>%
   modeltime_calibrate(testing(splits))
 
+# PLOT OF THE FITTED MODEL FORECAST OF THE TRAINING DATA
 calibration_tbl %>%
   modeltime_forecast(
     new_data    = testing(splits),
-    actual_data = cm_data
+    actual_data = cm_data      # original CM series from arima_data
   ) %>%
   plot_modeltime_forecast(
-    .legend_max_width = 20,
-    .title = "ARIMA Forecast for CIBC (CM)"
+    .title = "ARIMA Forecast for CM (Testing Period)"
   )
           </code></pre>
         </div>
@@ -185,8 +211,15 @@ calibration_tbl %>%
         <div class="solution-box">
           <div class="solution-title">SOLUTION</div>
           <pre><code class="language-r">
-accuracy_tbl <- calibration_tbl %>% modeltime_accuracy()
-accuracy_tbl
+# compute the metrics here (show your work)
+
+accuracy_tbl <- calibration_tbl %>%
+  modeltime_accuracy()
+
+accuracy_tbl   # shows the full accuracy table
+
+# extract only the R-squared value
+accuracy_tbl$rsq
           </code></pre>
           <p>The <strong>R²</strong> value (rsq) reported here reflects test forecast performance.</p>
         </div>
@@ -419,7 +452,7 @@ YOUR ANSWER Q15: Which variable did Fitzgerald think was the bad control, and wh
 
 <footer class="site-footer h-card">
   <div class="wrapper">
-    <h2 class="footer-heading">osb</h2>
+    <h2 class="footer-heading"></h2>
   </div>
 </footer>
 
