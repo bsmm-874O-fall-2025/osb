@@ -43,7 +43,7 @@
     <a class="site-title" href="/osb/">osb</a>
     <nav class="site-nav">
       <div class="trigger">
-        <a class="page-link" href="/osb/labs/solutions/BSMM_8740_Q11_solutions.html">BSMM 8740 – Q11 Solutions</a>
+        <a class="page-link" href="/osb/labs/solutions/BSMM_8740_Q11_solutions.html">BSMM 8740 – Lab 6 Time Series Methods</a>
       </div>
     </nav>
   </div>
@@ -87,6 +87,18 @@ arima_data <- readr::read_csv("data/stock_data.csv", show_col_types = FALSE)
         <hr>
 
         <h2>Exercise 1: EDA (Plotting the Data)</h2>
+        <p> This question uses data for the closing prices of the five major Canadian banks from 2005-08-10 to 2023-09-29. The data was obtained using the following code (the difference in the time range is due to elimination of rows with NA values:
+r
+tidyquant::tq_get(
+  c("TD","BMO","BNS","RBC","CM")
+  , get = "stock.prices"
+  , from = "2000-01-01"
+  , to = "2023-10-01"
+)
+The data can be found in your **data** directory
+{r}
+ </p>
+        <p>Plot the data using functions in the timetk package </p>
         <div class="solution-box">
           <div class="solution-title">SOLUTION</div>
           <pre><code class="language-r">
@@ -176,7 +188,7 @@ accuracy_tbl
         </div>
 
         <hr>
-        <p><em>End of Q11 Solutions</em></p>
+        <!-- <p><em>End of Q11 Solutions</em></p> -->
 
       </div>
     </article>
